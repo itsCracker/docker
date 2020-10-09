@@ -1,16 +1,41 @@
 steps:
-
-- id: 'build prod app'
-  name: 'gcr.io/cloud-builders/docker'
-  args: [
-    'build',
-    '--tag=gcr.io/$PROJECT_ID/yii-basic',
-    '--cache-from=gcr.io/$PROJECT_ID/yii-basic:latest',
-    '.',
-  ]
-  waitFor: ['-']
-
-- id: 'push app'
-  name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/yii-basic:latest']
-  waitFor: ['build prod app']
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "rims"
+  namespace: "default"
+  labels:
+    app: "rims"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "rims"
+  template:
+    metadata:
+      labels:
+        app: "rims"
+    spec:
+      containers:
+      - name: "rims"
+        image: "rims:latest"
+---
+apiVersion: "autoscaling/v2beta1"
+kind: "HorizontalPodAutoscaler"
+metadata:
+  name: "rims-1-hpa-hrcb"
+  namespace: "default"
+  labels:
+    app: "rims-1"
+spec:
+  scaleTargetRef:
+    kind: "Deployment"
+    name: "rims-1"
+    apiVersion: "apps/v1"
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+  - type: "Resource"
+    resource:
+      name: "cpu"
+      targetAverageUtilization: 80
