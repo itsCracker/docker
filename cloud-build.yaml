@@ -1,0 +1,23 @@
+steps:
+
+- id: 'build prod app'
+  name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '--tag=gcr.io/$PROJECT_ID/yii-basic',
+    '--cache-from=gcr.io/$PROJECT_ID/yii-basic:latest',
+    '.',
+  ]
+  waitFor: ['-']
+
+- id: 'push app'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/yii-basic:latest']
+  waitFor: ['build prod app']
+
+  git init
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/itsCracker/docker.git
+git push -u origin main
