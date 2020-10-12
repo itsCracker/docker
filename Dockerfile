@@ -106,9 +106,18 @@ COPY  . /var/www/html/app
 
 WORKDIR /var/www/html/app   
 
+RUN apt-get update && \
+      apt-get -y install sudo
+
+RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+
+USER docker
+CMD /bin/bash
+RUN sudo chmod -R 777 /var/www/html/app  
+
 #update composer
 RUN  composer update
-RUN sudo chmod -R 777 /var/www/html/app  
+
 
 
              
