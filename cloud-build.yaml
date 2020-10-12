@@ -21,7 +21,7 @@ steps:
   - run
   - --image=gcr.io/$PROJECT_ID/demo-app:latest
   - --location=us-central1-a
-  - --cluster=demo-app
+  - --cluster=rims-cluster
   
 
   
