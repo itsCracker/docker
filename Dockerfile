@@ -113,8 +113,7 @@ RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
 
 USER docker
 CMD /bin/bash
-RUN chmod 440 /etc/sudoers
-RUN sudo chmod -R 777 /var/www/html/app  
+RUN chmod -R 777 /var/www/html/app  
 
 #update composer
 RUN  composer update
