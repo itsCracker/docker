@@ -4,14 +4,24 @@ steps:
   name: 'gcr.io/cloud-builders/docker'
   args: [
     'build',
-    '--tag=gcr.io/$PROJECT_ID/yii-basic',
-    '--cache-from=gcr.io/$PROJECT_ID/yii-basic:latest',
+    '--tag=gcr.io/$PROJECT_ID/demo-app',
+    '--cache-from=gcr.io/$PROJECT_ID/demo-app:latest',
     '.',
   ]
   waitFor: ['-']
 
 - id: 'push app'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/yii-basic:latest']
+  args: ['push', 'gcr.io/$PROJECT_ID/demo-app:latest']
   waitFor: ['build prod app']
+
+- id: 'deploy container image to GKE'
+  name: "gcr.io/cloud-builders/gke-deploy"
+  args: 
+  - run
+  - --image=gcr.io/$PROJECT_ID/demo-app:latest
+  - --location=us-central1-a
+  - --cluster=demo-app
+  
+
   
