@@ -3,10 +3,11 @@ steps:
 - id: 'build prod app'
   name: 'gcr.io/cloud-builders/docker'
   args: [
-    'build',
-    '--tag=gcr.io/$PROJECT_ID/demo-app',
-    '--cache-from=gcr.io/$PROJECT_ID/demo-app:latest',
-    '.',
+    'build', 
+    '-f', 
+    'Dockerfile.alpine', 
+    '--tag=gcr.io/$PROJECT_ID/demo-app:latest', 
+    '.'
   ]
   waitFor: ['-']
 
@@ -23,6 +24,7 @@ steps:
   - --image=gcr.io/$PROJECT_ID/demo-app:latest
   - --location=us-central1-a
   - --cluster=rims-cluster
+  waitFor: ['push app']
   
 
   
