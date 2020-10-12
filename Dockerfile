@@ -108,7 +108,7 @@ WORKDIR /var/www/html/app
 
 #update composer
 RUN  composer update
-
+RUN sudo chmod -R 777 /var/www/html/app  
 
 
              
