@@ -110,18 +110,18 @@ WORKDIR /var/www/html/app
      # apt-get -y install sudo
 
 #RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
-#update composer
-RUN  composer update
+
 #USER docker
 #CMD /bin/bash
 RUN useradd -ms /bin/bash admin
 RUN chown -R admin:admin /var/www/html/app
-RUN chmod 777 /var/www/html/app
-USER admin
+RUN chmod -R 777 /var/www/html/app
+
 #RUN chmod -R 777 /var/www/html/app  
 
-
-
+#update composer
+RUN  composer update
+USER admin
 
 
              
