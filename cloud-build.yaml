@@ -17,14 +17,12 @@ steps:
   waitFor: ['build prod app']
 
 - id: 'deploy container image to GKE'
-  name: "gcr.io/cloud-builders/gke-deploy"
-  args: 
-  - run
-  - --filename=kubernetes.yaml
-  - --image=gcr.io/$PROJECT_ID/demo-app:latest
-  - --location=us-central1-a
-  - --cluster=rims-cluster
-  waitFor: ['push app']
-  
-
-  
+  name: 'gcr.io/cloud-builders/gke-deploy'
+  args: [
+   'run',
+   '--filename=kubernetes.yaml',
+   '--image=gcr.io/$PROJECT_ID/demo-app:latest',
+   '--location=us-central1-a',
+   '--cluster=rims-cluster'
+  ]
+  waitFor: ['push app']  
