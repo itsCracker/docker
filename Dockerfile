@@ -67,7 +67,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
     VERSION_PRESTISSIMO_PLUGIN=^0.3.7
 
 # Add configuration files
-COPY image-files/ /
+COPY container-config/ /
 
 # Add GITHUB_API_TOKEN support for composer
 RUN chmod 700 \
@@ -85,6 +85,11 @@ RUN composer global require --optimize-autoloader \
         "hirak/prestissimo:${VERSION_PRESTISSIMO_PLUGIN}" && \
     composer global dumpautoload --optimize && \
     composer clear-cache
+
+# Enable mod_rewrite for images with apache
+RUN if command -v a2enmod >/dev/null 2>&1; then \
+        a2enmod rewrite headers \
+    ;fi
 
 # Install Yii framework bash autocompletion
 RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
@@ -118,4 +123,7 @@ WORKDIR /var/www/html/app
 RUN  composer update
 #USER admin
 RUN chmod a+rwx -R /var/www/html/app
+
+
+             
 
