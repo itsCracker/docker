@@ -1,5 +1,48 @@
 FROM php:7.4-fpm
 
+# Install Forego
+RUN curl -L -o /usr/local/bin/forego https://github.com/jwilder/forego/releases/download/v0.16.1/forego
+RUN chmod u+x /usr/local/bin/forego
+
+# Install nginx
+RUN apt-get update \
+ && apt-get install -y --force-yes \
+            nginx-full \
+            cron \
+        --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Add configuration files
+COPY image-files/ /
+
+# forward request and error logs to docker log collector
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+ && ln -sf /dev/stderr /var/log/nginx/error.log \
+ && ln -sf /usr/sbin/cron /usr/sbin/crond
+
+CMD ["forego", "start", "-r", "-f", "/root/Procfile"]
+
+EXPOSE 80 443
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
 RUN apt-get update && \
     apt-get -y install \
@@ -67,7 +110,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
     VERSION_PRESTISSIMO_PLUGIN=^0.3.7
 
 # Add configuration files
-COPY container-config/ /
+COPY image-files/ /
 
 # Add GITHUB_API_TOKEN support for composer
 RUN chmod 700 \
@@ -106,24 +149,7 @@ COPY  . /var/www/html/app
 
 WORKDIR /var/www/html/app   
 
-#RUN apt-get update && \
-     # apt-get -y install sudo
-
-#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
-
-#USER docker
-#CMD /bin/bash
-#RUN useradd -ms /bin/bash admin
-#RUN chown -R admin:admin /var/www/html/app
-#RUN chmod -R 777 /var/www/html/app
-
-#RUN chmod -R 777 /var/www/html/app  
-
 #update composer
 RUN  composer update
 #USER admin
 RUN chmod a+rwx -R /var/www/html/app
-
-
-             
-
