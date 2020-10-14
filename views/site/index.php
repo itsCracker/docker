@@ -7,9 +7,9 @@ $this->title = 'My Yii App';
 <div class="site-index">
 
     <div class="jumbotron">
-        <h1>Hello World!</h1>
+        <h1>Hello World, CI/CD!</h1>
 
-        <p class="lead">You have successfully created your Yii-powered application.</p>
+        <p class="lead">CI/CD with GCP!.</p>
 
         <p><a class="btn btn-lg btn-success" href="http://www.yiiframework.com">Get started with Yii</a></p>
     </div>
