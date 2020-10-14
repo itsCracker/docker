@@ -44,22 +44,22 @@ RUN apt-get update && \
 
 # Install PHP extensions required for Yii 2.0 Framework
 ARG X_LEGACY_GD_LIB=0
-RUN docker-php-ext-configure gd \
-                --with-freetype=/usr/include/ \
-                --with-jpeg=/usr/include/; \
-    docker-php-ext-configure bcmath && \
-    docker-php-ext-install \
-        soap \
-        zip \
-        curl \
-        bcmath \
-        exif \
-        gd \
-        iconv \
-        intl \
-        mbstring \
-        opcache \
-        pdo_mysql 
+# RUN docker-php-ext-configure gd \
+#                 --with-freetype=/usr/include/ \
+#                 --with-jpeg=/usr/include/; \
+#     docker-php-ext-configure bcmath && \
+#     docker-php-ext-install \
+#         soap \
+#         zip \
+#         curl \
+#         bcmath \
+#         exif \
+#         gd \
+#         iconv \
+#         intl \
+#         mbstring \
+#         opcache \
+#         pdo_mysql 
 
 # Install PECL extensions
 # see http://stackoverflow.com/a/8154466/291573) for usage of `printf`
