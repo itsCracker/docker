@@ -2,7 +2,7 @@
 # ==============================================
 
 ARG PHP_BASE_IMAGE_VERSION
-FROM php:7.3-fpm-6.0-rc2
+FROM php:7.4-fpm
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
 ENV DEBIAN_FRONTEND=noninteractive
