@@ -1,7 +1,3 @@
-# PHP Docker image for Yii 2.0 Framework runtime
-# ==============================================
-
-ARG PHP_BASE_IMAGE_VERSION
 FROM php:7.4-fpm
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
@@ -70,7 +66,6 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
     PATH=/app:/app/vendor/bin:/root/.composer/vendor/bin:$PATH \
     VERSION_PRESTISSIMO_PLUGIN=^0.3.7
 
-
 # Add configuration files
 COPY image-files/ /
 
@@ -84,19 +79,42 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
         --filename=composer.phar \
         --install-dir=/usr/local/bin && \
     composer clear-cache
+
 # Install composer plugins
 RUN composer global require --optimize-autoloader \
         "hirak/prestissimo:${VERSION_PRESTISSIMO_PLUGIN}" && \
     composer global dumpautoload --optimize && \
     composer clear-cache
+
 # Install Yii framework bash autocompletion
 RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
         -o /etc/bash_completion.d/yii
-                
-COPY  . /var/www/html/app
-WORKDIR /var/www/html/app 
 
-# Startup script for FPM
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["docker-run.sh"]
+# Application environment
+COPY vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY  . /var/www/html/app
+
+#RUN rm -R /var/www/html/app/web/assets
+#RUN mkdir -p /var/www/html/app/web/assets
+#RUN chmod -R 777 /var/www/html/app/web/assets
+#RUN chown -R www-data:www-data /var/www/html/app/web/assets
+
+WORKDIR /var/www/html/app   
+
+#RUN apt-get update && \
+     # apt-get -y install sudo
+
+#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+
+#USER docker
+#CMD /bin/bash
+#RUN useradd -ms /bin/bash admin
+#RUN chown -R admin:admin /var/www/html/app
+#RUN chmod -R 777 /var/www/html/app
+
+#RUN chmod -R 777 /var/www/html/app  
+
+#update composer
+RUN  composer update
+#USER admin
 RUN chmod a+rwx -R /var/www/html/app
