@@ -3,25 +3,25 @@ steps:
 - id: 'build prod app'
   name: 'gcr.io/cloud-builders/docker'
   args: [
-    'build', 
-    '-f', 
-    'Dockerfile.alpine', 
-    '--tag=gcr.io/$PROJECT_ID/demo-app:latest', 
-    '.'
+    'build',
+    '--build-arg',
+    'APP_ENV=prod',
+    '--tag=gcr.io/$PROJECT_ID/rims',
+    '.',
   ]
   waitFor: ['-']
 
 - id: 'push app'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/demo-app:latest']
+  args: ['push', 'gcr.io/$PROJECT_ID/rims:latest']
   waitFor: ['build prod app']
 
 - id: 'deploy container image to GKE'
   name: 'gcr.io/cloud-builders/gke-deploy'
   args: [
    'run',
-   '--filename=kubernetes.yaml',
-   '--image=gcr.io/$PROJECT_ID/demo-app:latest',
+   '--filename=./kubernetes/kubernetes.yaml',
+   '--image=gcr.io/$PROJECT_ID/rims:latest',
    '--location=us-central1-a',
    '--cluster=rims-cluster'
   ]

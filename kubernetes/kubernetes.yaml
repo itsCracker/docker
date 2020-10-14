@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rims
+  namespace: default
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: #Update Pods a certain number at a time
+      maxUnavailable: 1 #Total number of pods that can be unavailable at once
+      maxSurge: 1 #Maximum number of pods that can be deployed above desired state
+  replicas: 2 #The number of pods that should always be running
+  selector:
+    matchLabels:
+      app: rims
+  template:
+    metadata:
+      labels:
+        app: rims
+    spec:
+      containers:
+      - name: rims-app
+        image: gcr.io/medfast-rims/rims:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+---  
+apiVersion: v1
+kind: Service
+metadata:
+  name: rims-service
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+    app: rims
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
