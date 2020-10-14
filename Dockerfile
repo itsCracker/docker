@@ -118,3 +118,4 @@ WORKDIR /var/www/html/app
 RUN  composer update
 #USER admin
 RUN chmod a+rwx -R /var/www/html/app
+
