@@ -2,7 +2,7 @@
 # ==============================================
 
 ARG PHP_BASE_IMAGE_VERSION
-FROM php:${PHP_BASE_IMAGE_VERSION}-fpm-stretch
+FROM php:7.4-fpm-stretch
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
 ENV DEBIAN_FRONTEND=noninteractive
