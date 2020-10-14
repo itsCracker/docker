@@ -1,6 +1,6 @@
 steps:
 
-- id: 'build prod app'
+- id: 'Build application container'
   name: 'gcr.io/cloud-builders/docker'
   args: [
     'build',
@@ -11,12 +11,12 @@ steps:
   ]
   waitFor: ['-']
 
-- id: 'push app'
+- id: 'Push application to GCR'
   name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/$PROJECT_ID/rims:latest']
-  waitFor: ['build prod app']
+  waitFor: ['Build application container']
 
-- id: 'deploy container image to GKE'
+- id: 'Deploy container image to GKE'
   name: 'gcr.io/cloud-builders/gke-deploy'
   args: [
    'run',
@@ -25,4 +25,4 @@ steps:
    '--location=us-central1-a',
    '--cluster=rims-cluster'
   ]
-  waitFor: ['push app']  
+  waitFor: ['Push application to GCR']  

@@ -1,43 +1,52 @@
-FROM php:7.4-apache
+# PHP Docker image for Yii 2.0 Framework runtime
+# ==============================================
+
+ARG PHP_BASE_IMAGE_VERSION
+FROM php:${PHP_BASE_IMAGE_VERSION}-fpm-stretch
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get -y install \
         gnupg2 && \
-    apt-key update && \
+    curl -sL https://deb.nodesource.com/setup_6.x | bash - && \
     apt-get update && \
     apt-get -y install \
             g++ \
             git \
+            bash-completion \
             curl \
             imagemagick \
+            libfreetype6-dev \
             libcurl3-dev \
             libicu-dev \
+            libmcrypt-dev \
             libfreetype6-dev \
             libjpeg-dev \
             libjpeg62-turbo-dev \
-            libonig-dev \
             libmagickwand-dev \
+            libmcrypt-dev \
             libpq-dev \
             libpng-dev \
-            libxml2-dev \
             libzip-dev \
             zlib1g-dev \
             default-mysql-client \
             openssh-client \
+            libxml2-dev \
             nano \
-            unzip \
-            libcurl4-openssl-dev \
-            libssl-dev \
+            linkchecker \
+            nodejs \
+            npm \
         --no-install-recommends && \
         apt-get clean && \
+        npm -g install npm@latest && \
         rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install PHP extensions required for Yii 2.0 Framework
-ARG X_LEGACY_GD_LIB=0
 RUN docker-php-ext-configure gd \
-                --with-freetype=/usr/include/ \
-                --with-jpeg=/usr/include/; \
+        --with-freetype-dir=/usr/include/ \
+        --with-png-dir=/usr/include/ \
+        --with-jpeg-dir=/usr/include/ && \
     docker-php-ext-configure bcmath && \
     docker-php-ext-install \
         soap \
@@ -56,74 +65,65 @@ RUN docker-php-ext-configure gd \
 # Install PECL extensions
 # see http://stackoverflow.com/a/8154466/291573) for usage of `printf`
 RUN printf "\n" | pecl install \
-        imagick && \
+        apcu \
+        imagick \
+        mcrypt-1.0.0 && \
     docker-php-ext-enable \
+        apcu \
         imagick
 
-# Environment settings
-ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    PHP_USER_ID=33 \
+# Install xdebug
+RUN cd /tmp && \
+    git clone git://github.com/xdebug/xdebug.git && \
+    cd xdebug && \
+    git checkout 2.7.2 && \
+    phpize && \
+    ./configure --enable-xdebug && \
+    make && \
+    make install && \
+    rm -rf /tmp/xdebug
+
+# Install less-compiler
+RUN npm install -g \
+        less \
+        lesshint \
+        uglify-js \
+        uglifycss
+
+# Install Yii framework bash autocompletion
+RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
+        -o /etc/bash_completion.d/yii
+
+ENV PHP_USER_ID=33 \
+    PHP_ENABLE_XDEBUG=0 \
+    VERSION_COMPOSER_ASSET_PLUGIN=^1.4.3 \
+    VERSION_PRESTISSIMO_PLUGIN=^0.3.0 \
     PATH=/app:/app/vendor/bin:/root/.composer/vendor/bin:$PATH \
-    VERSION_PRESTISSIMO_PLUGIN=^0.3.7
+    TERM=linux \
+    COMPOSER_ALLOW_SUPERUSER=1
 
 # Add configuration files
-COPY container-config/ /
+COPY image-files/ /
 
 # Add GITHUB_API_TOKEN support for composer
 RUN chmod 700 \
-        /usr/local/bin/docker-php-entrypoint \
+        /usr/local/bin/docker-entrypoint.sh \
+        /usr/local/bin/docker-run.sh \
         /usr/local/bin/composer
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- \
         --filename=composer.phar \
         --install-dir=/usr/local/bin && \
-    composer clear-cache
-
-# Install composer plugins
-RUN composer global require --optimize-autoloader \
+    composer global require --optimize-autoloader \
+        "fxp/composer-asset-plugin:${VERSION_COMPOSER_ASSET_PLUGIN}" \
         "hirak/prestissimo:${VERSION_PRESTISSIMO_PLUGIN}" && \
     composer global dumpautoload --optimize && \
     composer clear-cache
-
-# Enable mod_rewrite for images with apache
-RUN if command -v a2enmod >/dev/null 2>&1; then \
-        a2enmod rewrite headers \
-    ;fi
-
-# Install Yii framework bash autocompletion
-RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
-        -o /etc/bash_completion.d/yii
-
-# Application environment
-COPY vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY  . /var/www/html/app
+WORKDIR /var/www/html/app 
 
-#RUN rm -R /var/www/html/app/web/assets
-#RUN mkdir -p /var/www/html/app/web/assets
-#RUN chmod -R 777 /var/www/html/app/web/assets
-#RUN chown -R www-data:www-data /var/www/html/app/web/assets
-
-WORKDIR /var/www/html/app   
-
-#RUN apt-get update && \
-     # apt-get -y install sudo
-
-#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
-
-#USER docker
-#CMD /bin/bash
-#RUN useradd -ms /bin/bash admin
-#RUN chown -R admin:admin /var/www/html/app
-#RUN chmod -R 777 /var/www/html/app
-
-#RUN chmod -R 777 /var/www/html/app  
-
-#update composer
-RUN  composer update
-#USER admin
+# Startup script for FPM
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["docker-run.sh"]
 RUN chmod a+rwx -R /var/www/html/app
-
-
-             
-
