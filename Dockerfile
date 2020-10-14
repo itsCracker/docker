@@ -72,15 +72,15 @@ RUN printf "\n" | pecl install \
         imagick
 
 # Install xdebug
-RUN cd /tmp && \
-    git clone git://github.com/xdebug/xdebug.git && \
-    cd xdebug && \
-    git checkout 2.7.2 && \
-    phpize && \
-    ./configure --enable-xdebug && \
-    make && \
-    make install && \
-    rm -rf /tmp/xdebug
+# RUN cd /tmp && \
+#     git clone git://github.com/xdebug/xdebug.git && \
+#     cd xdebug && \
+#     git checkout 2.7.2 && \
+#     phpize && \
+#     ./configure --enable-xdebug && \
+#     make && \
+#     make install && \
+#     rm -rf /tmp/xdebug
 
 # Install less-compiler
 RUN npm install -g \
