@@ -1,114 +1,45 @@
-FROM php:7.4-fpm
+FROM touch4it/docker-php7:php7.2-fpm-nginx
 
-# Install system packages for PHP extensions recommended for Yii 2.0 Framework
-RUN apt-get update && \
-    apt-get -y install \
-        gnupg2 && \
-    apt-key update && \
-    apt-get update && \
-    apt-get -y install \
-            g++ \
-            git \
-            curl \
-            imagemagick \
-            libcurl3-dev \
-            libicu-dev \
-            libfreetype6-dev \
-            libjpeg-dev \
-            libjpeg62-turbo-dev \
-            libonig-dev \
-            libmagickwand-dev \
-            libpq-dev \
-            libpng-dev \
-            libxml2-dev \
-            libzip-dev \
-            zlib1g-dev \
-            default-mysql-client \
-            openssh-client \
-            nano \
-            unzip \
-            libcurl4-openssl-dev \
-            libssl-dev \
-        --no-install-recommends && \
-        apt-get clean && \
-        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV VERSION_COMPOSER_ASSET_PLUGIN=^1.3.0
 
-# Install PHP extensions required for Yii 2.0 Framework
-ARG X_LEGACY_GD_LIB=0
-RUN docker-php-ext-configure gd \
-                --with-freetype=/usr/include/ \
-                --with-jpeg=/usr/include/; \
-    docker-php-ext-configure bcmath && \
-    docker-php-ext-install \
-        soap \
-        zip \
-        curl \
-        bcmath \
-        exif \
-        gd \
-        iconv \
-        intl \
-        mbstring \
-        opcache \
-        pdo_mysql \
-        pdo_pgsql
+# Memcached
+RUN apk add --no-cache libmemcached-dev zlib-dev cyrus-sasl-dev git \
+    && docker-php-source extract \
+    && git clone --branch php7 https://github.com/php-memcached-dev/php-memcached.git /usr/src/php/ext/memcached/ \
+    && docker-php-ext-configure memcached \
+    && docker-php-ext-install memcached \
+    && docker-php-source delete \
+    && apk del --no-cache zlib-dev cyrus-sasl-dev
 
-# Install PECL extensions
-# see http://stackoverflow.com/a/8154466/291573) for usage of `printf`
-RUN printf "\n" | pecl install \
-        imagick && \
-    docker-php-ext-enable \
-        imagick
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-# Environment settings
-ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    PHP_USER_ID=33 \
-    PATH=/app:/app/vendor/bin:/root/.composer/vendor/bin:$PATH \
-    VERSION_PRESTISSIMO_PLUGIN=^0.3.7
+# apcu
+RUN docker-php-source extract \
+    && apk add --no-cache --virtual .phpize-deps-configure $PHPIZE_DEPS \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && apk del .phpize-deps-configure \
+    && docker-php-source delete
 
-# Add configuration files
-COPY image-files/ /
+# set recommended apcu PHP.ini settings
+# see https://secure.php.net/manual/en/apcu.configuration.php
+RUN { \
+	echo 'apc.shm_segments=1'; \
+	echo 'apc.shm_size=256M'; \
+	echo 'apc.num_files_hint=7000'; \
+	echo 'apc.user_entries_hint=4096'; \
+	echo 'apc.ttl=7200'; \
+	echo 'apc.user_ttl=7200'; \
+	echo 'apc.gc_ttl=3600'; \
+	echo 'apc.max_file_size=1M'; \
+	echo 'apc.stat=1'; \
+} > $PHP_INI_DIR/conf.d/apcu-recommended.ini
 
-
-# Add GITHUB_API_TOKEN support for composer
-RUN chmod 700 \
-        /usr/local/bin/docker-php-entrypoint \
-        /usr/local/bin/composer
-# Install composer plugins
 RUN composer global require --optimize-autoloader \
-        "hirak/prestissimo:${VERSION_PRESTISSIMO_PLUGIN}" && \
-    composer global dumpautoload --optimize && \
-    composer clear-cache
+		"fxp/composer-asset-plugin:${VERSION_COMPOSER_ASSET_PLUGIN}"
 
-# Install Yii framework bash autocompletion
-RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
-        -o /etc/bash_completion.d/yii
+COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
 
-# Application environment
-COPY default /etc/nginx/sites-available/default
-COPY  . /var/www/html/app
+WORKDIR /var/www/html
 
-WORKDIR /var/www/html/app   
-
-#RUN apt-get update && \
-     # apt-get -y install sudo
-
-#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
-
-#USER docker
-#CMD /bin/bash
-#RUN useradd -ms /bin/bash admin
-#RUN chown -R admin:admin /var/www/html/app
-#RUN chmod -R 777 /var/www/html/app
-
-#RUN chmod -R 777 /var/www/html/app  
-
-#update composer
-RUN  composer update
-#USER admin
-RUN chmod a+rwx -R /var/www/html/app
-
-
-             
-
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]
