@@ -1,66 +1,85 @@
-FROM php:7.4-fpm
+FROM ubuntu:14.04.2
 
-RUN apt-get update
-RUN apt-get install -y \
-            git \
-            libzip-dev \
-            libc-client-dev \
-            libkrb5-dev \
-            libpng-dev \
-            libjpeg-dev \
-            libwebp-dev \
-            libfreetype6-dev \
-            libkrb5-dev \
-            libicu-dev \
-            zlib1g-dev \
-            zip \
-            ffmpeg \
-            libmemcached11 \
-            libmemcachedutil2 \
-            build-essential \
-            libmemcached-dev \
-            gnupg2 \
-            libpq-dev \
-            libpq5 \
-            libz-dev
+#Dockerfile based on work by richarvey https://hub.docker.com/r/richarvey/nginx-php-fpm/~/dockerfile/
 
-RUN echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main 9.5' > /etc/apt/sources.list.d/pgdg.list
+MAINTAINER Kai Heikka <synomi66@gmail.com>
 
-RUN apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
+# Surpress Upstart errors/warning
+RUN dpkg-divert --local --rename --add /sbin/initctl
+RUN ln -sf /bin/true /sbin/initctl
 
-RUN apt-get update && apt-get install -y postgresql-client-9.5
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN docker-php-ext-configure gd \
-    --with-webp=/usr/include/ \
-    --with-freetype=/usr/include/ \
-    --with-jpeg=/usr/include/
-RUN docker-php-ext-install gd
+# Update base image
+# Add sources for latest nginx
+# Install software requirements
+RUN apt-get update && \
+apt-get install -y software-properties-common && \
+nginx=stable && \
+add-apt-repository ppa:nginx/$nginx && \
+apt-get update && \
+apt-get upgrade -y && \
+BUILD_PACKAGES="supervisor nginx php5-fpm php5-mysql php-apc php5-curl php5-gd php5-intl php5-mcrypt php5-memcache php5-sqlite php5-tidy php5-xmlrpc php5-xsl php5-pgsql php5-mongo pwgen php5-sybase curl nano git" && \
+apt-get -y install $BUILD_PACKAGES && \
+apt-get remove --purge -y software-properties-common && \
+apt-get autoremove -y && \
+apt-get clean && \
+apt-get autoclean && \
+echo -n > /var/lib/apt/extended_states && \
+rm -rf /var/lib/apt/lists/* && \
+rm -rf /usr/share/man/?? && \
+rm -rf /usr/share/man/??_*
 
-RUN docker-php-ext-configure imap \
-    --with-kerberos \
-    --with-imap-ssl
-RUN docker-php-ext-install imap
+# tweak nginx config
+RUN sed -i -e"s/worker_processes  1/worker_processes 5/" /etc/nginx/nginx.conf && \
+sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf && \
+sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf && \
+echo "daemon off;" >> /etc/nginx/nginx.conf
 
-RUN docker-php-ext-configure zip
 
-RUN docker-php-ext-install zip
+# tweak php-fpm config
+RUN sed -i -e "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini && \
+sed -i -e "s/upload_max_filesize\s*=\s*2M/upload_max_filesize = 100M/g" /etc/php5/fpm/php.ini && \
+sed -i -e "s/post_max_size\s*=\s*8M/post_max_size = 100M/g" /etc/php5/fpm/php.ini && \
+sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g" /etc/php5/fpm/php-fpm.conf && \
+sed -i -e "s/;catch_workers_output\s*=\s*yes/catch_workers_output = yes/g" /etc/php5/fpm/pool.d/www.conf && \
+sed -i -e "s/pm.max_children = 5/pm.max_children = 9/g" /etc/php5/fpm/pool.d/www.conf && \
+sed -i -e "s/pm.start_servers = 2/pm.start_servers = 3/g" /etc/php5/fpm/pool.d/www.conf && \
+sed -i -e "s/pm.min_spare_servers = 1/pm.min_spare_servers = 2/g" /etc/php5/fpm/pool.d/www.conf && \
+sed -i -e "s/pm.max_spare_servers = 3/pm.max_spare_servers = 4/g" /etc/php5/fpm/pool.d/www.conf && \
+sed -i -e "s/pm.max_requests = 500/pm.max_requests = 200/g" /etc/php5/fpm/pool.d/www.conf
 
-RUN docker-php-ext-configure intl
-RUN docker-php-ext-install intl
+# fix ownership of sock file for php-fpm
+RUN sed -i -e "s/;listen.mode = 0660/listen.mode = 0750/g" /etc/php5/fpm/pool.d/www.conf && \
+find /etc/php5/cli/conf.d/ -name "*.ini" -exec sed -i -re 's/^(\s*)#(.*)/\1;\2/g' {} \;
 
-RUN docker-php-ext-install pdo_mysql
-RUN docker-php-ext-install pdo_pgsql
-RUN docker-php-ext-install exif
-RUN docker-php-ext-install fileinfo
+# nginx site conf
+RUN rm -Rf /etc/nginx/conf.d/* && \
+rm -Rf /etc/nginx/sites-available/default && \
+mkdir -p /etc/nginx/ssl/
+ADD ./nginx-site.conf /etc/nginx/sites-available/default.conf
+RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
-RUN pecl install xdebug
+# Supervisor Config
+ADD ./supervisord.conf /etc/supervisord.conf
 
-RUN curl --silent --show-error https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Start Supervisord
+ADD ./start.sh /start.sh
+RUN chmod 755 /start.sh
 
-RUN pecl install memcached
+# Setup Volume
+VOLUME ["/app"]
 
-RUN echo extension=memcached.so >> /usr/local/etc/php/conf.d/memcached.ini
+# chmod /app
+RUN chown -Rf www-data.www-data /app/
 
-ENV COMPOSER_ALLOW_SUPERUSER 1
-COPY  . /var/www/html/app
-WORKDIR /app
+# add composer
+RUN curl -sS https://getcomposer.org/installer | php
+RUN mv composer.phar /usr/local/bin/composer
+RUN composer global require "fxp/composer-asset-plugin:~1.1.1" --prefer-source --no-interaction
+
+# Expose Ports
+EXPOSE 443
+EXPOSE 80
+
+CMD ["/bin/bash", "/start.sh"]
