@@ -1,4 +1,4 @@
-FROM php:7.4-apache
+FROM php:7.4-fpm
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
 RUN apt-get update && \
@@ -67,7 +67,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
     VERSION_PRESTISSIMO_PLUGIN=^0.3.7
 
 # Add configuration files
-COPY container-config/ /
+COPY image-files/ /
 
 # Add GITHUB_API_TOKEN support for composer
 RUN chmod 700 \
@@ -86,23 +86,13 @@ RUN composer global require --optimize-autoloader \
     composer global dumpautoload --optimize && \
     composer clear-cache
 
-# Enable mod_rewrite for images with apache
-RUN if command -v a2enmod >/dev/null 2>&1; then \
-        a2enmod rewrite headers \
-    ;fi
-
 # Install Yii framework bash autocompletion
 RUN curl -L https://raw.githubusercontent.com/yiisoft/yii2/master/contrib/completion/bash/yii \
         -o /etc/bash_completion.d/yii
 
 # Application environment
-COPY vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY default /etc/nginx/sites-available/default
 COPY  . /var/www/html/app
-
-#RUN rm -R /var/www/html/app/web/assets
-#RUN mkdir -p /var/www/html/app/web/assets
-#RUN chmod -R 777 /var/www/html/app/web/assets
-#RUN chown -R www-data:www-data /var/www/html/app/web/assets
 
 WORKDIR /var/www/html/app   
 
