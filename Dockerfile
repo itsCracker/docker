@@ -60,9 +60,7 @@ RUN printf "\n" | pecl install \
     docker-php-ext-enable \
         imagick
 # Install composer
-# Install composer:
-RUN wget https://getcomposer.org/composer-stable.phar
-RUN mv composer.phar /usr/local/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 # Environment settings
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     PHP_USER_ID=33 \
