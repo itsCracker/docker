@@ -61,7 +61,7 @@ RUN printf "\n" | pecl install \
         imagick
 # Install composer
 # Install composer:
-RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/1b137f8bf6db3e79a38a5bc45324414a6b1f9df2/web/installer -O - -q | php -- --quiet
+RUN wget https://getcomposer.org/composer-stable.phar
 RUN mv composer.phar /usr/local/bin/composer
 # Environment settings
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
