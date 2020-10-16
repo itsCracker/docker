@@ -59,7 +59,8 @@ RUN printf "\n" | pecl install \
         imagick && \
     docker-php-ext-enable \
         imagick
-
+# Install composer
+RUN apt-get install composer
 # Environment settings
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     PHP_USER_ID=33 \
@@ -69,11 +70,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
 # Add configuration files
 COPY image-files/ /
 
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- \
-        --filename=composer.phar \
-        --install-dir=/usr/local/bin && \
-    composer clear-cache
+
 # Add GITHUB_API_TOKEN support for composer
 RUN chmod 700 \
         /usr/local/bin/docker-php-entrypoint \
