@@ -1,10 +1,37 @@
-FROM nginx:1.17.4-alpine
+FROM php:7.4-fpm
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
-RUN apk add --no-cache php7 php7-dev php7-pear php7-fpm php7-mysqli php7-pdo_mysql php7-json php7-openssl php7-curl \
-    php7-zlib php7-xml php7-simplexml php7-phar php7-intl php7-dom php7-xmlreader php7-xmlwriter  php7-ctype php7-session \
-    php7-mbstring php7-gd php-zip supervisor  libxml2-dev php7-tokenizer
-RUN apk add autoconf gcc g++ make
+RUN apt-get update && \
+    apt-get -y install \
+        gnupg2 && \
+    apt-key update && \
+    apt-get update && \
+    apt-get -y install \
+            g++ \
+            git \
+            curl \
+            imagemagick \
+            libcurl3-dev \
+            libicu-dev \
+            libfreetype6-dev \
+            libjpeg-dev \
+            libjpeg62-turbo-dev \
+            libonig-dev \
+            libmagickwand-dev \
+            libpq-dev \
+            libpng-dev \
+            libxml2-dev \
+            libzip-dev \
+            zlib1g-dev \
+            default-mysql-client \
+            openssh-client \
+            nano \
+            unzip \
+            libcurl4-openssl-dev \
+            libssl-dev \
+        --no-install-recommends && \
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install PHP extensions required for Yii 2.0 Framework
 ARG X_LEGACY_GD_LIB=0
@@ -42,7 +69,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
 
 # Add configuration files
 COPY image-files/ /
-COPY ./supervisor.conf /etc/supervisor/conf.d/supervisord.conf
+
 
 # Add GITHUB_API_TOKEN support for composer
 RUN chmod 700 \
