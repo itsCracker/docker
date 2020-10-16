@@ -27,7 +27,6 @@ RUN apt-get update && \
             openssh-client \
             nano \
             unzip \
-            composer \
             libcurl4-openssl-dev \
             libssl-dev \
         --no-install-recommends && \
@@ -70,17 +69,15 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 \
 # Add configuration files
 COPY image-files/ /
 
-# Add GITHUB_API_TOKEN support for composer
-RUN chmod 700 \
-        /usr/local/bin/docker-php-entrypoint \
-        /usr/local/bin/composer
-
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- \
         --filename=composer.phar \
         --install-dir=/usr/local/bin && \
     composer clear-cache
-
+# Add GITHUB_API_TOKEN support for composer
+RUN chmod 700 \
+        /usr/local/bin/docker-php-entrypoint \
+        /usr/local/bin/composer
 # Install composer plugins
 RUN composer global require --optimize-autoloader \
         "hirak/prestissimo:${VERSION_PRESTISSIMO_PLUGIN}" && \
