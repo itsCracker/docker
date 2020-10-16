@@ -11,7 +11,7 @@ $this->title = 'My Yii App';
 
         <p class="lead">CI/CD with GCP!.</p>
 
-        <p><a class="btn btn-lg btn-success" href="http://www.yiiframework.com">Get started with Yii</a></p>
+        <p><a class="btn btn-lg btn-success" href="http://www.yiiframework.com">Get started with Yii on NGINX</a></p>
     </div>
 
     <div class="body-content">
