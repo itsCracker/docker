@@ -1,2 +1,2 @@
-FROM nginx:1.11.4-alpine
+FROM php:7.4-fpm
 COPY ./nginx.conf /etc/nginx/nginx.conf
