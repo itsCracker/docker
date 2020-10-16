@@ -36,9 +36,9 @@ RUN { \
 RUN composer global require --optimize-autoloader \
 		"fxp/composer-asset-plugin:${VERSION_COMPOSER_ASSET_PLUGIN}"
 
-COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
-
-WORKDIR /var/www/html
+COPY nginx.vh.default.conf /etc/nginx/conf.d/default
+COPY  . /var/www/html/app
+WORKDIR /var/www/html/app
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
