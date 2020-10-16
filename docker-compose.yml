@@ -1,19 +1,5 @@
 version: '2'
 services:
-  db:
-      image: mariadb:10.1.21
-      container_name: yii_mariadb
-      restart: always
-      volumes:
-        - ./mariadb/initdb/:/docker-entrypoint-initdb.d
-        - ./mariadb/data/:/var/lib/mysql
-      environment:
-        - MYSQL_ROOT_PASSWORD=RXbNkA6Ysk3cM7Eo
-        - MYSQL_DATABASE=yiidb
-        - MYSQL_USER=yii
-        - MYSQL_PASSWORD=iFvJMyjZp1EnlQvR
-      command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
-
   php:
       build: ./php
       container_name: yii_php7-fpm
@@ -38,10 +24,3 @@ services:
         - php
       ports:
         - 8080:80
-
-  mya:
-    image: phpmyadmin/phpmyadmin
-    container_name: yii_phpmyadmin
-    restart: always
-    ports:
-      - "8000:80"
