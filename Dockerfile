@@ -1,4 +1,5 @@
 FROM php:7.4-fpm
+EXPOSE 9000
 
 # Install system packages for PHP extensions recommended for Yii 2.0 Framework
 RUN apt-get update && \
